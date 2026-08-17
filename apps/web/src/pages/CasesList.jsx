@@ -64,41 +64,50 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
     document.body.removeChild(link);
   }
 
+  function handleResetFilters() {
+    setSearch('');
+    setStatus('');
+    setCaseType('');
+    setPriority('');
+    setLocationFilter('');
+    setSortBy('newest');
+  }
+
   return (
     <div>
       <div className="page-header">
         <div className="page-title-group">
-          <h1>Central Case &amp; Action Tracker</h1>
+          <h1>Central Case &amp; Action Registry</h1>
           <div className="page-subtitle">
-            Master repository for employee grievances, disciplinary proceedings, union matters, and operational concerns.
+            Master repository for employee grievances, disciplinary matters, union proceedings, and workplace concerns.
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={exportCSV} className="btn btn-outline">
             📥 Export CSV
           </button>
           <button onClick={onOpenRaiseModal} className="btn btn-danger">
-            ➕ Raise Concern
+            <span style={{ fontSize: 15, fontWeight: 900 }}>+</span> Raise Concern
           </button>
         </div>
       </div>
 
-      {/* SEARCH & MULTI-FILTER CONTROLS */}
-      <div className="irms-card" style={{ padding: '16px 20px', marginBottom: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+      {/* SEARCH & MULTI-FILTER BAR */}
+      <div className="irms-card" style={{ padding: '18px 22px', marginBottom: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, alignItems: 'flex-end' }}>
           <div>
-            <label className="form-label" style={{ fontSize: 11 }}>Search Case / Employee / Ref</label>
+            <label className="form-label">Search Keyword / Ref / Name</label>
             <input
               className="form-control"
-              placeholder="e.g. IR-2026 or Samuel"
+              placeholder="e.g. IR-2026, Samuel, Shift"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="form-label" style={{ fontSize: 11 }}>Case Type</label>
+            <label className="form-label">Case Type</label>
             <select className="form-control" value={caseType} onChange={(e) => setCaseType(e.target.value)}>
               <option value="">All Case Types</option>
               <option value="grievance">Grievance</option>
@@ -110,7 +119,7 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
           </div>
 
           <div>
-            <label className="form-label" style={{ fontSize: 11 }}>Status</label>
+            <label className="form-label">Workflow Status</label>
             <select className="form-control" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">All Statuses</option>
               <option value="in_progress">In Progress</option>
@@ -121,7 +130,7 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
           </div>
 
           <div>
-            <label className="form-label" style={{ fontSize: 11 }}>Priority</label>
+            <label className="form-label">Priority Level</label>
             <select className="form-control" value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="">All Priorities</option>
               <option value="urgent">Urgent (48h)</option>
@@ -132,7 +141,7 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
           </div>
 
           <div>
-            <label className="form-label" style={{ fontSize: 11 }}>Sort Order</label>
+            <label className="form-label">Sort Order</label>
             <select className="form-control" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -140,11 +149,25 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
               <option value="deadline">Closest SLA Deadline</option>
             </select>
           </div>
+
+          <div>
+            <button
+              onClick={handleResetFilters}
+              className="btn btn-outline"
+              style={{ width: '100%', height: 38, fontSize: 12 }}
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
       </div>
 
       {/* MASTER DATA TABLE */}
-      {error && <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 14, borderRadius: 8, marginBottom: 16 }}>{error}</div>}
+      {error && (
+        <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 14, borderRadius: 8, marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
 
       <div className="table-responsive">
         <table className="irms-table">
@@ -165,14 +188,14 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: 32, color: '#64748B' }}>
+                <td colSpan={10} style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
                   Filtering case registry records…
                 </td>
               </tr>
             ) : cases.length === 0 ? (
               <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: 32, color: '#64748B' }}>
-                  No cases matched the search criteria.
+                <td colSpan={10} style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
+                  No cases matched the selected criteria. Try resetting filters.
                 </td>
               </tr>
             ) : (
@@ -187,17 +210,17 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
                     </span>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 700, maxWidth: 280, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 700, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#0F172A' }}>
                       {c.subject}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B' }}>{c.category}</div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{c.employee_name}</div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>{c.employee_id}</div>
+                    <div style={{ fontSize: 11, color: '#64748B' }}><code>{c.employee_id}</code></div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 500 }}>{c.location.split('(')[0]}</div>
+                    <div style={{ fontWeight: 600 }}>{c.location.split('(')[0]}</div>
                     <div style={{ fontSize: 11, color: '#64748B' }}>{c.department.split('&')[0]}</div>
                   </td>
                   <td>
@@ -230,7 +253,7 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
                     <Link
                       to={`/cases/${c.id}`}
                       className="btn btn-sm btn-primary"
-                      style={{ fontSize: 11.5, padding: '4px 10px' }}
+                      style={{ fontSize: 11.5, padding: '5px 12px' }}
                     >
                       Workspace →
                     </Link>

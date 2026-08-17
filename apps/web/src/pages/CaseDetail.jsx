@@ -25,7 +25,7 @@ export default function CaseDetail({ currentUser }) {
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('workflow'); // 'workflow', 'actions', 'documents', 'communications', 'audit'
+  const [activeTab, setActiveTab] = useState('workflow'); // 'workflow', 'actions', 'documents', 'communications', 'ai_case'
 
   // Stage transition modal state
   const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
@@ -132,8 +132,8 @@ export default function CaseDetail({ currentUser }) {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading case workspace…</div>;
-  if (error || !caseData) return <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 16, borderRadius: 8 }}>{error || 'Case not found'}</div>;
+  if (loading) return <div style={{ padding: 48, textAlign: 'center', color: '#64748B', fontWeight: 600 }}>Loading Case Workspace…</div>;
+  if (error || !caseData) return <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 20, borderRadius: 10, margin: '20px 0' }}>{error || 'Case not found'}</div>;
 
   const stagesList = caseData.case_type === 'disciplinary' ? DISCIPLINARY_STAGES : GRIEVANCE_STAGES;
   const currentStageIndex = stagesList.findIndex(s => s.key === caseData.current_stage);
@@ -142,7 +142,7 @@ export default function CaseDetail({ currentUser }) {
     <div>
       {/* BREADCRUMB NAVIGATION */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Link to="/cases" style={{ color: '#64748B', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+        <Link to="/cases" style={{ color: '#64748B', textDecoration: 'none', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back to Central Case Registry
         </Link>
         <span style={{ fontSize: 12, color: '#94A3B8' }}>
@@ -151,17 +151,17 @@ export default function CaseDetail({ currentUser }) {
       </div>
 
       {/* CASE MASTER WORKSPACE HEADER CARD */}
-      <div className="irms-card" style={{ padding: 24, borderTop: '4px solid #D40511' }}>
+      <div className="irms-card" style={{ borderTop: '4px solid #D40511' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#D40511' }}>{caseData.case_number}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 24, fontWeight: 900, color: '#D40511', letterSpacing: '-0.3px' }}>{caseData.case_number}</span>
             <span className={`badge badge-${caseData.case_type}`}>{caseData.case_type}</span>
             <span className={`badge badge-${caseData.priority}`}>{caseData.priority}</span>
             <span className={`badge badge-${caseData.status}`}>{caseData.status}</span>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            {(currentUser?.role === 'er_manager' || currentUser?.role === 'hr_director' || currentUser?.role === 'line_manager') && (
+            {(currentUser?.role === 'er_manager' || currentUser?.role === 'hr_director' || currentUser?.role === 'line_manager' || currentUser?.role === 'sys_admin') && (
               <button
                 onClick={() => {
                   setTargetStage(stagesList[Math.min(stagesList.length - 1, currentStageIndex + 1)]?.key || 'closed');
@@ -175,19 +175,19 @@ export default function CaseDetail({ currentUser }) {
           </div>
         </div>
 
-        <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, color: '#0F172A' }}>
+        <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 8, color: '#0F172A', letterSpacing: '-0.2px' }}>
           {caseData.subject}
         </h2>
-        <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
+        <p style={{ color: '#475569', fontSize: 13.5, lineHeight: 1.6, marginBottom: 18 }}>
           {caseData.description}
         </p>
 
         {/* METADATA GRID */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: '#F8FAFC', padding: 16, borderRadius: 10, border: '1px solid #E2E8F0' }}>
           <div>
             <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Employee Involved</span>
-            <div style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A', marginTop: 2 }}>{caseData.employee_name}</div>
-            <div style={{ fontSize: 11, color: '#64748B' }}>{caseData.employee_id}</div>
+            <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', marginTop: 2 }}>{caseData.employee_name}</div>
+            <div style={{ fontSize: 11, color: '#64748B' }}><code>{caseData.employee_id}</code></div>
           </div>
           <div>
             <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Operating Location</span>
@@ -203,24 +203,24 @@ export default function CaseDetail({ currentUser }) {
           </div>
           <div>
             <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>SLA Target Date</span>
-            <div style={{ fontWeight: 700, fontSize: 13, color: new Date(caseData.sla_due_date) < new Date() && caseData.status !== 'closed' ? '#DC2626' : '#0F172A', marginTop: 2 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, color: new Date(caseData.sla_due_date) < new Date() && caseData.status !== 'closed' ? '#DC2626' : '#0F172A', marginTop: 2 }}>
               📅 {caseData.sla_due_date || 'None'}
             </div>
           </div>
         </div>
 
         {caseData.outcome && (
-          <div style={{ marginTop: 16, background: '#F0FDF4', borderLeft: '4px solid #16A34A', padding: 12, borderRadius: 6 }}>
+          <div style={{ marginTop: 16, background: '#F0FDF4', borderLeft: '4px solid #16A34A', padding: 14, borderRadius: 8 }}>
             <span style={{ fontWeight: 800, fontSize: 12, color: '#166534', textTransform: 'uppercase' }}>Official Final Resolution:</span>
-            <div style={{ fontSize: 13.5, color: '#14532D', marginTop: 2 }}>{caseData.outcome}</div>
+            <div style={{ fontSize: 13.5, color: '#14532D', marginTop: 3 }}>{caseData.outcome}</div>
           </div>
         )}
       </div>
 
-      {/* 6-STAGE VISUAL INTERACTIVE STEPPER */}
+      {/* 6-STAGE VISUAL STEPPER */}
       <div className="irms-card">
         <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', marginBottom: 12 }}>
-          Workflow Progression Status
+          Workflow Progression Timeline
         </div>
 
         <div className="stepper-container">
@@ -243,9 +243,9 @@ export default function CaseDetail({ currentUser }) {
       </div>
 
       {/* WORKSPACE TAB NAVIGATION */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '2px solid #E2E8F0', paddingBottom: 2 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: '2px solid #E2E8F0', paddingBottom: 2 }}>
         {[
-          { key: 'workflow', label: '📜 Stage History & Timeline', count: caseData.stage_history?.length },
+          { key: 'workflow', label: '📜 Stage History', count: caseData.stage_history?.length },
           { key: 'actions', label: '⚡ Action Items', count: caseData.actions?.length },
           { key: 'documents', label: '📁 Documents & Evidence', count: caseData.documents?.length },
           { key: 'communications', label: '💬 Messages & Notes', count: caseData.communications?.length },
@@ -257,16 +257,17 @@ export default function CaseDetail({ currentUser }) {
             style={{
               padding: '10px 18px',
               fontWeight: 700,
-              fontSize: 13.5,
+              fontSize: 13,
               border: 'none',
               background: 'none',
               cursor: 'pointer',
               color: activeTab === tab.key ? '#D40511' : '#64748B',
               borderBottom: activeTab === tab.key ? '3px solid #D40511' : '3px solid transparent',
-              marginBottom: -2
+              marginBottom: -2,
+              transition: 'all 0.15s ease'
             }}
           >
-            {tab.label} {tab.count !== undefined && <span style={{ fontSize: 11, background: '#E2E8F0', padding: '1px 6px', borderRadius: 10 }}>{tab.count}</span>}
+            {tab.label} {tab.count !== undefined && <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 7px', borderRadius: 10, marginLeft: 4 }}>{tab.count}</span>}
           </button>
         ))}
       </div>
@@ -274,23 +275,23 @@ export default function CaseDetail({ currentUser }) {
       {/* TAB CONTENT: STAGE HISTORY */}
       {activeTab === 'workflow' && (
         <div className="irms-card">
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Stage Transition Audit Trail</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 800, marginBottom: 16 }}>Stage Transition Audit Trail</h3>
           <ul className="stage-timeline">
             {caseData.stage_history?.map(h => (
               <li key={h.id} className="stage-item">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 800, textTransform: 'capitalize', color: '#0F172A', fontSize: 14 }}>
+                  <span style={{ fontWeight: 800, textTransform: 'capitalize', color: '#0F172A', fontSize: 13.5 }}>
                     {h.stage.replace('_', ' ')}
                   </span>
                   <span style={{ fontSize: 12, color: '#64748B' }}>
                     by <strong>{h.actor_name}</strong>
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+                <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
                   Entered: {new Date(h.entered_at).toLocaleString()} {h.exited_at && `· Exited: ${new Date(h.exited_at).toLocaleString()}`}
                 </div>
                 {h.notes && (
-                  <div style={{ fontSize: 13, color: '#334155', background: '#F8FAFC', padding: '8px 12px', borderRadius: 6, marginTop: 6, border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 13, color: '#334155', background: '#F8FAFC', padding: '10px 14px', borderRadius: 6, marginTop: 8, border: '1px solid #E2E8F0' }}>
                     {h.notes}
                   </div>
                 )}
@@ -315,11 +316,11 @@ export default function CaseDetail({ currentUser }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: 12,
+                  padding: '12px 16px',
                   borderRadius: 8,
                   background: act.status === 'completed' ? '#F0FDF4' : '#FFFFFF',
                   border: '1px solid #E2E8F0',
-                  marginBottom: 8
+                  marginBottom: 10
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -346,21 +347,21 @@ export default function CaseDetail({ currentUser }) {
           </div>
 
           {/* ADD ACTION FORM */}
-          <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
-            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>➕ Assign New Action Item</div>
+          <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
+            <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 12 }}>➕ Assign New Action Item</div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 10, alignItems: 'flex-end' }}>
               <div>
-                <label className="form-label" style={{ fontSize: 11 }}>Action Title *</label>
+                <label className="form-label">Action Title *</label>
                 <input
                   className="form-control"
-                  placeholder="e.g. Schedule investigation witness interview"
+                  placeholder="e.g. Conduct interview with shift supervisor"
                   value={actionTitle}
                   onChange={(e) => setActionTitle(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="form-label" style={{ fontSize: 11 }}>Responsible Owner</label>
+                <label className="form-label">Owner</label>
                 <input
                   className="form-control"
                   placeholder="e.g. Tunde Bakare"
@@ -369,7 +370,7 @@ export default function CaseDetail({ currentUser }) {
                 />
               </div>
               <div>
-                <label className="form-label" style={{ fontSize: 11 }}>Deadline</label>
+                <label className="form-label">Due Date</label>
                 <input
                   type="date"
                   className="form-control"
@@ -377,7 +378,7 @@ export default function CaseDetail({ currentUser }) {
                   onChange={(e) => setActionDueDate(e.target.value)}
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ height: 38 }}>
+              <button type="submit" className="btn btn-primary" style={{ height: 40 }}>
                 Add Action
               </button>
             </div>
@@ -392,11 +393,11 @@ export default function CaseDetail({ currentUser }) {
             <div className="irms-card-title">Case Documents &amp; Evidentiary Repository</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 20 }}>
             {caseData.documents?.map(doc => (
-              <div key={doc.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 14 }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
-                <div style={{ fontWeight: 700, fontSize: 13, wordBreak: 'break-all' }}>{doc.document_name}</div>
+              <div key={doc.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 26, marginBottom: 6 }}>📄</div>
+                <div style={{ fontWeight: 700, fontSize: 13, wordBreak: 'break-all', color: '#0F172A' }}>{doc.document_name}</div>
                 <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
                   Type: <strong>{doc.document_type}</strong> · Size: {doc.file_size_kb} KB
                 </div>
@@ -407,21 +408,21 @@ export default function CaseDetail({ currentUser }) {
             ))}
           </div>
 
-          <form onSubmit={handleAddDocument} style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
-            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>📎 Attach Statement or Evidentiary File</div>
+          <form onSubmit={handleAddDocument} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
+            <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 12 }}>📎 Attach Statement or Evidentiary File</div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 10, alignItems: 'flex-end' }}>
               <div>
-                <label className="form-label" style={{ fontSize: 11 }}>Document Filename *</label>
+                <label className="form-label">Document Filename *</label>
                 <input
                   className="form-control"
-                  placeholder="e.g. CCTV_Security_Report_Audit.pdf"
+                  placeholder="e.g. Witness_Statement_Ramp_Officer.pdf"
                   value={newDocName}
                   onChange={(e) => setNewDocName(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="form-label" style={{ fontSize: 11 }}>Document Category</label>
+                <label className="form-label">Document Category</label>
                 <select className="form-control" value={newDocType} onChange={(e) => setNewDocType(e.target.value)}>
                   <option value="statement">Employee / Witness Statement</option>
                   <option value="evidence">Evidentiary Record / Log</option>
@@ -430,7 +431,7 @@ export default function CaseDetail({ currentUser }) {
                   <option value="letter">Official Notice / Query Letter</option>
                 </select>
               </div>
-              <button type="submit" className="btn btn-primary" style={{ height: 38 }}>
+              <button type="submit" className="btn btn-primary" style={{ height: 40 }}>
                 Upload &amp; Log
               </button>
             </div>
@@ -445,7 +446,7 @@ export default function CaseDetail({ currentUser }) {
             <div className="irms-card-title">Case Communications &amp; Internal Notes</div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
             {caseData.communications?.map(comm => (
               <div
                 key={comm.id}
@@ -453,13 +454,13 @@ export default function CaseDetail({ currentUser }) {
                   background: comm.is_internal ? '#FEF3C7' : '#F8FAFC',
                   border: comm.is_internal ? '1px solid #FDE68A' : '1px solid #E2E8F0',
                   borderRadius: 8,
-                  padding: 14
+                  padding: 16
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A' }}>
                     {comm.sender_name} <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>({comm.sender_role})</span>
-                    {comm.is_internal && <span style={{ marginLeft: 8, background: '#D97706', color: '#FFFFFF', fontSize: 10, padding: '2px 6px', borderRadius: 4 }}>INTERNAL HR NOTE</span>}
+                    {comm.is_internal && <span style={{ marginLeft: 8, background: '#D97706', color: '#FFFFFF', fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>INTERNAL HR NOTE</span>}
                   </div>
                   <span style={{ fontSize: 11, color: '#94A3B8' }}>
                     {new Date(comm.created_at).toLocaleString()}
@@ -472,7 +473,7 @@ export default function CaseDetail({ currentUser }) {
             ))}
           </div>
 
-          <form onSubmit={handleAddCommunication} style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+          <form onSubmit={handleAddCommunication} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
             <div className="form-group">
               <label className="form-label">Post Message or Case Note</label>
               <textarea
@@ -485,13 +486,13 @@ export default function CaseDetail({ currentUser }) {
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 600, color: '#475569' }}>
                 <input
                   type="checkbox"
                   checked={isInternalNote}
                   onChange={(e) => setIsInternalNote(e.target.checked)}
                 />
-                Mark as Internal HR Note (Hidden from employee)
+                Mark as Internal HR Note (Confidential to HR)
               </label>
               <button type="submit" className="btn btn-primary">
                 Post Note 💬
@@ -503,9 +504,9 @@ export default function CaseDetail({ currentUser }) {
 
       {/* TAB CONTENT: AI CASE SUMMARY */}
       {activeTab === 'ai_case' && (
-        <div className="irms-card" style={{ background: '#0F172A', color: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 20 }}>🤖</span>
+        <div className="irms-card" style={{ background: '#0B1120', color: '#FFFFFF', border: '1px solid rgba(255,204,0,0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <span style={{ fontSize: 22 }}>🤖</span>
             <span style={{ fontWeight: 800, fontSize: 16, color: '#FFCC00' }}>AI Objective Case Intelligence Summary</span>
           </div>
 
@@ -541,7 +542,7 @@ export default function CaseDetail({ currentUser }) {
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>
                 Transition Workflow Stage: {caseData.case_number}
               </h3>
-              <button onClick={() => setIsTransitionModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>
+              <button onClick={() => setIsTransitionModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#64748B' }}>
                 ✕
               </button>
             </div>
@@ -564,7 +565,7 @@ export default function CaseDetail({ currentUser }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Transition Notes &amp; Procedural Justification *</label>
+                  <label className="form-label">Transition Notes &amp; Justification *</label>
                   <textarea
                     className="form-control"
                     rows={3}
