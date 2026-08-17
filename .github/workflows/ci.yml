@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: er_dev
+          POSTGRES_PASSWORD: er_dev
+          POSTGRES_DB: er_case_system
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U er_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://er_dev:er_dev@localhost:5432/er_case_system
+      JWT_SECRET: ci_test_secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install --workspace=apps/api
+      - run: npm run migrate --workspace=apps/api
+      - run: npm run test --workspace=apps/api
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install --workspace=apps/web
+      - run: npm run build --workspace=apps/web
