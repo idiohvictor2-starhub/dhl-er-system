@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { irmsApi } from '../api/irms';
+import { 
+  Search, 
+  Download, 
+  Plus, 
+  Filter, 
+  RotateCcw, 
+  FolderKanban, 
+  ArrowRight, 
+  Clock, 
+  Building2, 
+  AlertTriangle 
+} from 'lucide-react';
 
 export default function CasesList({ currentUser, onOpenRaiseModal }) {
   const [cases, setCases] = useState([]);
@@ -44,11 +56,11 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
     const rows = cases.map(c => [
       c.case_number,
       c.case_type,
-      `"${c.subject.replace(/"/g, '""')}"`,
+      `"${(c.subject || '').replace(/"/g, '""')}"`,
       c.employee_id,
-      `"${c.employee_name}"`,
-      `"${c.department}"`,
-      `"${c.location}"`,
+      `"${(c.employee_name || '').replace(/"/g, '""')}"`,
+      `"${(c.department || '').replace(/"/g, '""')}"`,
+      `"${(c.location || '').replace(/"/g, '""')}"`,
       c.current_stage,
       c.priority,
       c.sla_due_date || 'N/A',
@@ -73,37 +85,46 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
     setSortBy('newest');
   }
 
+  const hasActiveFilters = search || status || caseType || priority || locationFilter || sortBy !== 'newest';
+
   return (
     <div>
-      <div className="page-header">
-        <div className="page-title-group">
-          <h1>Central Case &amp; Action Registry</h1>
-          <div className="page-subtitle">
-            Master repository for employee grievances, disciplinary matters, union proceedings, and workplace concerns.
-          </div>
+      {/* PAGE HERO HEADER */}
+      <div className="page-hero-header">
+        <div>
+          <h1 className="hero-heading">Central Case &amp; Action Registry</h1>
+          <p className="hero-tagline">
+            Master repository for employee grievances, disciplinary matters, union proceedings, and workplace queries.
+          </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={exportCSV} className="btn btn-outline">
-            📥 Export CSV
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button onClick={exportCSV} className="btn btn-outline" title="Export current list to CSV">
+            <Download size={16} />
+            <span>Export CSV ({cases.length})</span>
           </button>
-          <button onClick={onOpenRaiseModal} className="btn btn-danger">
-            <span style={{ fontSize: 15, fontWeight: 900 }}>+</span> Raise Concern
+          <button onClick={onOpenRaiseModal} className="btn btn-primary">
+            <Plus size={16} strokeWidth={3} />
+            <span>Raise Concern</span>
           </button>
         </div>
       </div>
 
       {/* SEARCH & MULTI-FILTER BAR */}
-      <div className="irms-card" style={{ padding: '18px 22px', marginBottom: 22 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, alignItems: 'flex-end' }}>
+      <div className="irms-card" style={{ padding: '22px 26px', marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, alignItems: 'flex-end' }}>
           <div>
             <label className="form-label">Search Keyword / Ref / Name</label>
-            <input
-              className="form-control"
-              placeholder="e.g. IR-2026, Samuel, Shift"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                className="form-control"
+                placeholder="e.g. IR-2026, Samuel, Shift"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ paddingLeft: 36 }}
+              />
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            </div>
           </div>
 
           <div>
@@ -133,8 +154,8 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
             <label className="form-label">Priority Level</label>
             <select className="form-control" value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="">All Priorities</option>
-              <option value="urgent">Urgent (48h)</option>
-              <option value="high">High</option>
+              <option value="urgent">Urgent (48h SLA)</option>
+              <option value="high">High Priority</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
@@ -143,126 +164,128 @@ export default function CasesList({ currentUser, onOpenRaiseModal }) {
           <div>
             <label className="form-label">Sort Order</label>
             <select className="form-control" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="newest">Newest First</option>
+              <option value="newest">Newest Registered First</option>
               <option value="oldest">Oldest First</option>
-              <option value="priority">Highest Priority</option>
-              <option value="deadline">Closest SLA Deadline</option>
+              <option value="sla_urgent">SLA Due Date (Most Urgent)</option>
+              <option value="priority">Priority Tier</option>
             </select>
           </div>
+        </div>
 
-          <div>
+        {hasActiveFilters && (
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+              Showing {cases.length} filtered cases
+            </span>
             <button
               onClick={handleResetFilters}
-              className="btn btn-outline"
-              style={{ width: '100%', height: 38, fontSize: 12 }}
+              style={{ background: 'none', border: 'none', color: 'var(--dhl-red)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
             >
-              Reset Filters
+              <RotateCcw size={14} />
+              <span>Reset Filters</span>
             </button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* MASTER DATA TABLE */}
-      {error && (
-        <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 14, borderRadius: 8, marginBottom: 16 }}>
-          {error}
+      {/* CASES DATA TABLE */}
+      <div className="irms-card">
+        <div className="irms-card-header">
+          <div className="irms-card-title">
+            <FolderKanban size={20} style={{ color: 'var(--dhl-red)' }} />
+            <span>Industrial Relations Master Case Register</span>
+          </div>
+          <span style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 600 }}>
+            {cases.length} Active Records
+          </span>
         </div>
-      )}
 
-      <div className="table-responsive">
-        <table className="irms-table">
-          <thead>
-            <tr>
-              <th>Case Number</th>
-              <th>Type</th>
-              <th>Subject &amp; Category</th>
-              <th>Employee</th>
-              <th>Location &amp; Dept</th>
-              <th>Current Stage</th>
-              <th>Priority</th>
-              <th>SLA Target</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
-                  Filtering case registry records…
-                </td>
-              </tr>
-            ) : cases.length === 0 ? (
-              <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: 40, color: '#64748B' }}>
-                  No cases matched the selected criteria. Try resetting filters.
-                </td>
-              </tr>
-            ) : (
-              cases.map(c => (
-                <tr key={c.id}>
-                  <td>
-                    <strong style={{ color: '#D40511', fontSize: 13 }}>{c.case_number}</strong>
-                  </td>
-                  <td>
-                    <span className={`badge badge-${c.case_type}`}>
-                      {c.case_type}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 700, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#0F172A' }}>
-                      {c.subject}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>{c.category}</div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600 }}>{c.employee_name}</div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}><code>{c.employee_id}</code></div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600 }}>{c.location.split('(')[0]}</div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>{c.department.split('&')[0]}</div>
-                  </td>
-                  <td>
-                    <span className={`badge badge-${c.current_stage}`}>
-                      {c.current_stage.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge badge-${c.priority}`}>
-                      {c.priority}
-                    </span>
-                  </td>
-                  <td>
-                    {c.sla_due_date ? (
-                      <span style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: new Date(c.sla_due_date) < new Date() && c.status !== 'closed' ? '#DC2626' : '#0F172A'
-                      }}>
-                        📅 {c.sla_due_date}
-                      </span>
-                    ) : '—'}
-                  </td>
-                  <td>
-                    <span className={`badge badge-${c.status}`}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td>
-                    <Link
-                      to={`/cases/${c.id}`}
-                      className="btn btn-sm btn-primary"
-                      style={{ fontSize: 11.5, padding: '5px 12px' }}
-                    >
-                      Workspace →
-                    </Link>
-                  </td>
+        {loading ? (
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+            Querying IR Central Registry…
+          </div>
+        ) : error ? (
+          <div style={{ padding: 24, color: 'var(--accent-red)', background: 'var(--accent-red-bg)', borderRadius: 'var(--radius-md)' }}>
+            Error fetching case registry: {error}
+          </div>
+        ) : cases.length === 0 ? (
+          <div style={{ padding: 56, textAlign: 'center', color: 'var(--text-muted)' }}>
+            <FolderKanban size={40} style={{ margin: '0 auto 12px', color: 'var(--text-light)' }} />
+            <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-main)' }}>No matching cases found</div>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Try adjusting your search criteria or reset active filters.</div>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="irms-table">
+              <thead>
+                <tr>
+                  <th>Case Ref ID</th>
+                  <th>Classification</th>
+                  <th>Subject &amp; Details</th>
+                  <th>Employee / Complainant</th>
+                  <th>Station Hub</th>
+                  <th>Workflow Stage</th>
+                  <th>Priority SLA</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {cases.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong style={{ color: 'var(--dhl-red)', fontSize: 13.5 }}>{c.case_number}</strong>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${c.case_type}`}>{c.case_type}</span>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 700, maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {c.subject}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                        Category: {c.category || 'General'}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{c.employee_name || 'Staff Member'}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}><code>{c.employee_id}</code></div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5 }}>
+                        <Building2 size={13} style={{ color: 'var(--text-muted)' }} />
+                        <span>{c.location?.split('(')[0] || 'Lagos Hub'}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${c.current_stage}`}>
+                        {c.current_stage?.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge badge-${c.priority}`}>{c.priority}</span>
+                      {c.sla_due_date && (
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <Clock size={11} />
+                          <span>Due: {new Date(c.sla_due_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge badge-${c.status}`}>{c.status}</span>
+                    </td>
+                    <td>
+                      <Link to={`/cases/${c.id}`} className="btn btn-sm btn-primary">
+                        <span>Workspace</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

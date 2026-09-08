@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import TopHeader from './components/TopHeader';
 import RaiseConcernModal from './components/RaiseConcernModal';
 import NotificationDrawer from './components/NotificationDrawer';
 
@@ -38,35 +39,41 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar
-        currentUser={currentUser}
-        onUserChange={handleUserChange}
-        onOpenRaiseModal={() => setIsRaiseModalOpen(true)}
-        alertCount={alertCount}
-        onToggleAlerts={() => setIsAlertsOpen(prev => !prev)}
-      />
+    <div className="app-shell">
+      {/* LEFT SIDEBAR NAVIGATION */}
+      <Sidebar currentUser={currentUser} />
 
-      <NotificationDrawer
-        isOpen={isAlertsOpen}
-        onClose={() => setIsAlertsOpen(false)}
-        onSelectCase={handleSelectCaseFromAlert}
-      />
+      {/* MAIN VIEWPORT */}
+      <div className="app-main">
+        <TopHeader
+          currentUser={currentUser}
+          onUserChange={handleUserChange}
+          onOpenRaiseModal={() => setIsRaiseModalOpen(true)}
+          alertCount={alertCount}
+          onToggleAlerts={() => setIsAlertsOpen(prev => !prev)}
+        />
 
-      <main className="irms-container" style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/" element={<Dashboard currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
-          <Route path="/dashboard" element={<Dashboard currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
-          <Route path="/cases" element={<CasesList currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
-          <Route path="/cases/:id" element={<CaseDetail currentUser={currentUser} />} />
-          <Route path="/union" element={<UnionWorkspace currentUser={currentUser} />} />
-          <Route path="/redundancy" element={<RedundancyTracker currentUser={currentUser} />} />
-          <Route path="/training" element={<TrainingTracker currentUser={currentUser} />} />
-          <Route path="/reports" element={<QuarterlyReportView currentUser={currentUser} />} />
-          <Route path="/admin" element={<SystemAdminView currentUser={currentUser} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+        <NotificationDrawer
+          isOpen={isAlertsOpen}
+          onClose={() => setIsAlertsOpen(false)}
+          onSelectCase={handleSelectCaseFromAlert}
+        />
+
+        <main className="page-content-wrapper">
+          <Routes>
+            <Route path="/" element={<Dashboard currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
+            <Route path="/dashboard" element={<Dashboard currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
+            <Route path="/cases" element={<CasesList currentUser={currentUser} onOpenRaiseModal={() => setIsRaiseModalOpen(true)} />} />
+            <Route path="/cases/:id" element={<CaseDetail currentUser={currentUser} />} />
+            <Route path="/union" element={<UnionWorkspace currentUser={currentUser} />} />
+            <Route path="/redundancy" element={<RedundancyTracker currentUser={currentUser} />} />
+            <Route path="/training" element={<TrainingTracker currentUser={currentUser} />} />
+            <Route path="/reports" element={<QuarterlyReportView currentUser={currentUser} />} />
+            <Route path="/admin" element={<SystemAdminView currentUser={currentUser} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
 
       <RaiseConcernModal
         isOpen={isRaiseModalOpen}

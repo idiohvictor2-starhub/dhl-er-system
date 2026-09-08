@@ -1,6 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { irmsApi } from '../api/irms';
+import { 
+  ArrowLeft, 
+  Clock, 
+  Building2, 
+  User, 
+  Calendar, 
+  RotateCw, 
+  CheckCircle2, 
+  MessageSquare, 
+  FileText, 
+  Layers, 
+  Bot, 
+  Sparkles, 
+  Upload, 
+  Plus, 
+  Send,
+  ShieldCheck,
+  Check,
+  AlertTriangle
+} from 'lucide-react';
 
 const GRIEVANCE_STAGES = [
   { key: 'informal_resolution', label: '1. Informal Resolution' },
@@ -33,7 +53,7 @@ export default function CaseDetail({ currentUser }) {
   const [stageNotes, setStageNotes] = useState('');
   const [isSubmittingStage, setIsSubmittingStage] = useState(false);
 
-  // New action modal / form state
+  // New action form state
   const [actionTitle, setActionTitle] = useState('');
   const [actionOwner, setActionOwner] = useState('');
   const [actionDueDate, setActionDueDate] = useState('');
@@ -132,36 +152,67 @@ export default function CaseDetail({ currentUser }) {
     }
   }
 
-  if (loading) return <div style={{ padding: 48, textAlign: 'center', color: '#64748B', fontWeight: 600 }}>Loading Case Workspace…</div>;
-  if (error || !caseData) return <div style={{ background: '#FEF2F2', color: '#DC2626', padding: 20, borderRadius: 10, margin: '20px 0' }}>{error || 'Case not found'}</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <RotateCw size={32} className="animate-spin" style={{ color: 'var(--dhl-yellow)', margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)' }}>Loading Case Workspace…</div>
+        <div style={{ fontSize: 13, marginTop: 4 }}>Retrieving evidence, stage history and audit trails</div>
+      </div>
+    );
+  }
+
+  if (error || !caseData) {
+    return (
+      <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', padding: 22, borderRadius: 'var(--radius-lg)', margin: '24px 0' }}>
+        <strong>⚠️ Error:</strong> {error || 'Case not found'}
+      </div>
+    );
+  }
 
   const stagesList = caseData.case_type === 'disciplinary' ? DISCIPLINARY_STAGES : GRIEVANCE_STAGES;
   const currentStageIndex = stagesList.findIndex(s => s.key === caseData.current_stage);
+  const isAuthorizedToTransition = currentUser?.role === 'er_manager' || currentUser?.role === 'hr_director' || currentUser?.role === 'line_manager' || currentUser?.role === 'sys_admin';
+  const isOverdue = caseData.sla_due_date && new Date(caseData.sla_due_date) < new Date() && caseData.status !== 'closed';
 
   return (
     <div>
       {/* BREADCRUMB NAVIGATION */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Link to="/cases" style={{ color: '#64748B', textDecoration: 'none', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-          ← Back to Central Case Registry
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <Link
+          to="/cases"
+          style={{
+            color: 'var(--text-muted)',
+            textDecoration: 'none',
+            fontSize: 13.5,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Central Case Registry</span>
         </Link>
-        <span style={{ fontSize: 12, color: '#94A3B8' }}>
-          Registered: {new Date(caseData.created_at).toLocaleString()}
+        <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+          Registered in System: <strong>{new Date(caseData.created_at).toLocaleString()}</strong>
         </span>
       </div>
 
-      {/* CASE MASTER WORKSPACE HEADER CARD */}
-      <div className="irms-card" style={{ borderTop: '4px solid #D40511' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#D40511', letterSpacing: '-0.3px' }}>{caseData.case_number}</span>
+      {/* CASE MASTER WORKSPACE HERO CARD */}
+      <div className="irms-card" style={{ borderTop: '4px solid var(--dhl-red)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--dhl-red)', letterSpacing: '-0.02em' }}>
+              {caseData.case_number}
+            </span>
             <span className={`badge badge-${caseData.case_type}`}>{caseData.case_type}</span>
             <span className={`badge badge-${caseData.priority}`}>{caseData.priority}</span>
             <span className={`badge badge-${caseData.status}`}>{caseData.status}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            {(currentUser?.role === 'er_manager' || currentUser?.role === 'hr_director' || currentUser?.role === 'line_manager' || currentUser?.role === 'sys_admin') && (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {isAuthorizedToTransition && (
               <button
                 onClick={() => {
                   setTargetStage(stagesList[Math.min(stagesList.length - 1, currentStageIndex + 1)]?.key || 'closed');
@@ -169,419 +220,454 @@ export default function CaseDetail({ currentUser }) {
                 }}
                 className="btn btn-primary"
               >
-                🔄 Transition Stage
+                <RotateCw size={15} />
+                <span>Transition Stage</span>
               </button>
             )}
           </div>
         </div>
 
-        <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 8, color: '#0F172A', letterSpacing: '-0.2px' }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 10, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
           {caseData.subject}
         </h2>
-        <p style={{ color: '#475569', fontSize: 13.5, lineHeight: 1.6, marginBottom: 18 }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
           {caseData.description}
         </p>
 
         {/* METADATA GRID */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, background: '#F8FAFC', padding: 16, borderRadius: 10, border: '1px solid #E2E8F0' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: 16,
+          background: '#F8FAFC',
+          padding: '20px 22px',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-light)'
+        }}>
           <div>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Employee Involved</span>
-            <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', marginTop: 2 }}>{caseData.employee_name}</div>
-            <div style={{ fontSize: 11, color: '#64748B' }}><code>{caseData.employee_id}</code></div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Employee Involved
+            </span>
+            <div style={{ fontWeight: 800, fontSize: 14.5, color: 'var(--text-main)', marginTop: 4 }}>{caseData.employee_name}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}><code>{caseData.employee_id}</code></div>
           </div>
+
           <div>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Operating Location</span>
-            <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A', marginTop: 2 }}>{caseData.location}</div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Operating Hub
+            </span>
+            <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text-main)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Building2 size={14} style={{ color: 'var(--text-muted)' }} />
+              <span>{caseData.location}</span>
+            </div>
           </div>
+
           <div>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Department</span>
-            <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A', marginTop: 2 }}>{caseData.department}</div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Department
+            </span>
+            <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text-main)', marginTop: 4 }}>{caseData.department}</div>
           </div>
+
           <div>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>HR / Line Lead</span>
-            <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A', marginTop: 2 }}>{caseData.owner_name}</div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              HR / Lead Handler
+            </span>
+            <div style={{ fontWeight: 700, fontSize: 13.5, color: 'var(--text-main)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <User size={14} style={{ color: 'var(--text-muted)' }} />
+              <span>{caseData.owner_name}</span>
+            </div>
           </div>
+
           <div>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>SLA Target Date</span>
-            <div style={{ fontWeight: 800, fontSize: 13, color: new Date(caseData.sla_due_date) < new Date() && caseData.status !== 'closed' ? '#DC2626' : '#0F172A', marginTop: 2 }}>
-              📅 {caseData.sla_due_date || 'None'}
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              SLA Target Deadline
+            </span>
+            <div style={{ fontWeight: 800, fontSize: 14, color: isOverdue ? 'var(--dhl-red)' : 'var(--text-main)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Calendar size={14} />
+              <span>{caseData.sla_due_date || 'None Assigned'}</span>
             </div>
           </div>
         </div>
 
         {caseData.outcome && (
-          <div style={{ marginTop: 16, background: '#F0FDF4', borderLeft: '4px solid #16A34A', padding: 14, borderRadius: 8 }}>
-            <span style={{ fontWeight: 800, fontSize: 12, color: '#166534', textTransform: 'uppercase' }}>Official Final Resolution:</span>
-            <div style={{ fontSize: 13.5, color: '#14532D', marginTop: 3 }}>{caseData.outcome}</div>
+          <div style={{ marginTop: 20, background: '#ECFDF5', borderLeft: '4px solid #10B981', padding: '16px 20px', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontWeight: 800, fontSize: 12, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Official Final Ruling &amp; Settlement:
+            </div>
+            <div style={{ fontSize: 14, color: '#065F46', marginTop: 4, fontWeight: 600 }}>{caseData.outcome}</div>
           </div>
         )}
       </div>
 
-      {/* 6-STAGE VISUAL STEPPER */}
-      <div className="irms-card">
-        <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', marginBottom: 12 }}>
-          Workflow Progression Timeline
-        </div>
-
-        <div className="stepper-container">
-          <div className="stepper-track" />
-          {stagesList.map((stg, idx) => {
-            const isCompleted = idx < currentStageIndex;
-            const isActive = idx === currentStageIndex;
-            return (
-              <div key={stg.key} className="step-item">
-                <div className={`step-circle ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}>
-                  {isCompleted ? '✓' : idx + 1}
-                </div>
-                <div className={`step-label ${isActive ? 'active' : ''}`}>
-                  {stg.label}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* WORKSPACE TAB NAVIGATION */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20, borderBottom: '2px solid #E2E8F0', paddingBottom: 2 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '2px solid var(--border-light)', paddingBottom: 2, overflowX: 'auto' }}>
         {[
-          { key: 'workflow', label: '📜 Stage History', count: caseData.stage_history?.length },
-          { key: 'actions', label: '⚡ Action Items', count: caseData.actions?.length },
-          { key: 'documents', label: '📁 Documents & Evidence', count: caseData.documents?.length },
-          { key: 'communications', label: '💬 Messages & Notes', count: caseData.communications?.length },
-          { key: 'ai_case', label: '🤖 AI Case Summary' }
+          { key: 'workflow', label: 'Stage History', icon: <Layers size={16} />, count: caseData.stage_history?.length },
+          { key: 'actions', label: 'Action Items', icon: <CheckCircle2 size={16} />, count: caseData.actions?.length },
+          { key: 'documents', label: 'Documents & Evidence', icon: <FileText size={16} />, count: caseData.documents?.length },
+          { key: 'communications', label: 'Messages & Notes', icon: <MessageSquare size={16} />, count: caseData.communications?.length },
+          { key: 'ai_case', label: 'AI Copilot Analysis', icon: <Bot size={16} /> }
         ].map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             style={{
-              padding: '10px 18px',
-              fontWeight: 700,
-              fontSize: 13,
+              padding: '12px 20px',
+              fontWeight: 800,
+              fontSize: 13.5,
               border: 'none',
               background: 'none',
               cursor: 'pointer',
-              color: activeTab === tab.key ? '#D40511' : '#64748B',
-              borderBottom: activeTab === tab.key ? '3px solid #D40511' : '3px solid transparent',
+              color: activeTab === tab.key ? 'var(--dhl-red)' : 'var(--text-muted)',
+              borderBottom: activeTab === tab.key ? '3px solid var(--dhl-red)' : '3px solid transparent',
               marginBottom: -2,
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
               transition: 'all 0.15s ease'
             }}
           >
-            {tab.label} {tab.count !== undefined && <span style={{ fontSize: 11, background: '#E2E8F0', padding: '2px 7px', borderRadius: 10, marginLeft: 4 }}>{tab.count}</span>}
+            {tab.icon}
+            <span>{tab.label}</span>
+            {tab.count !== undefined && (
+              <span style={{ fontSize: 11, background: '#F1F5F9', color: 'var(--text-main)', padding: '2px 8px', borderRadius: 10, marginLeft: 2 }}>
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* TAB CONTENT: STAGE HISTORY */}
+      {/* TAB 1: STAGE TRANSITION HISTORY */}
       {activeTab === 'workflow' && (
         <div className="irms-card">
-          <h3 style={{ fontSize: 15, fontWeight: 800, marginBottom: 16 }}>Stage Transition Audit Trail</h3>
-          <ul className="stage-timeline">
+          <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 20, color: 'var(--text-main)' }}>Stage Transition Audit Trail</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {caseData.stage_history?.map(h => (
-              <li key={h.id} className="stage-item">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 800, textTransform: 'capitalize', color: '#0F172A', fontSize: 13.5 }}>
-                    {h.stage.replace('_', ' ')}
+              <div key={h.id} style={{
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-md)',
+                background: '#F8FAFC',
+                border: '1px solid var(--border-light)',
+                borderLeft: '4px solid var(--dhl-yellow)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 800, textTransform: 'capitalize', color: 'var(--text-main)', fontSize: 15 }}>
+                    {h.stage?.replace('_', ' ')}
                   </span>
-                  <span style={{ fontSize: 12, color: '#64748B' }}>
-                    by <strong>{h.actor_name}</strong>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    {new Date(h.entered_at).toLocaleString()}
                   </span>
                 </div>
-                <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                  Entered: {new Date(h.entered_at).toLocaleString()} {h.exited_at && `· Exited: ${new Date(h.exited_at).toLocaleString()}`}
+                <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 8 }}>
+                  Advanced by: <strong style={{ color: 'var(--text-main)' }}>{h.actor_name}</strong>
                 </div>
                 {h.notes && (
-                  <div style={{ fontSize: 13, color: '#334155', background: '#F8FAFC', padding: '10px 14px', borderRadius: 6, marginTop: 8, border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-main)', background: '#FFFFFF', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', lineHeight: 1.5 }}>
                     {h.notes}
                   </div>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 
-      {/* TAB CONTENT: ACTION ITEMS */}
+      {/* TAB 2: ACTION ITEMS CHECKLIST */}
       {activeTab === 'actions' && (
         <div className="irms-card">
           <div className="irms-card-header">
-            <div className="irms-card-title">Case Action Items &amp; Deadlines</div>
+            <div className="irms-card-title">
+              <CheckCircle2 size={20} style={{ color: 'var(--accent-green)' }} />
+              <span>Investigation &amp; Hearing Action Items</span>
+            </div>
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            {caseData.actions?.map(act => (
-              <div
-                key={act.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  borderRadius: 8,
-                  background: act.status === 'completed' ? '#F0FDF4' : '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  marginBottom: 10
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <input
-                    type="checkbox"
-                    checked={act.status === 'completed'}
-                    onChange={() => handleToggleAction(act.id, act.status)}
-                    style={{ width: 18, height: 18, cursor: 'pointer' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13.5, textDecoration: act.status === 'completed' ? 'line-through' : 'none', color: '#0F172A' }}>
-                      {act.action_title}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+            {caseData.actions?.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: 13.5 }}>No action items recorded for this case yet.</p>
+            ) : (
+              caseData.actions?.map(a => {
+                const isCompleted = a.status === 'completed';
+                return (
+                  <div
+                    key={a.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '14px 18px',
+                      borderRadius: 'var(--radius-md)',
+                      background: isCompleted ? '#ECFDF5' : '#F8FAFC',
+                      border: isCompleted ? '1px solid #A7F3D0' : '1px solid var(--border-light)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={() => handleToggleAction(a.id, a.status)}
+                        style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--dhl-red)' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 14, textDecoration: isCompleted ? 'line-through' : 'none', color: isCompleted ? '#065F46' : 'var(--text-main)' }}>
+                          {a.action_title}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                          Owner: <strong>{a.owner_name}</strong> {a.due_date && `· Due: ${a.due_date}`}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                      Assignee: <strong>{act.owner_name}</strong> · Target: <strong>📅 {act.due_date}</strong>
-                    </div>
+                    <span className={`badge ${isCompleted ? 'badge-closed' : 'badge-in_progress'}`}>
+                      {a.status}
+                    </span>
                   </div>
-                </div>
-                <span className={`badge badge-${act.status}`}>
-                  {act.status}
-                </span>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
 
           {/* ADD ACTION FORM */}
-          <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
-            <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 12 }}>➕ Assign New Action Item</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 10, alignItems: 'flex-end' }}>
-              <div>
-                <label className="form-label">Action Title *</label>
-                <input
-                  className="form-control"
-                  placeholder="e.g. Conduct interview with shift supervisor"
-                  value={actionTitle}
-                  onChange={(e) => setActionTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="form-label">Owner</label>
-                <input
-                  className="form-control"
-                  placeholder="e.g. Tunde Bakare"
-                  value={actionOwner}
-                  onChange={(e) => setActionOwner(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="form-label">Due Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={actionDueDate}
-                  onChange={(e) => setActionDueDate(e.target.value)}
-                />
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ height: 40 }}>
-                Add Action
-              </button>
+          <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 20, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 14, color: 'var(--text-main)' }}>+ Add New Action Item</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 14 }}>
+              <input
+                required
+                className="form-control"
+                placeholder="Action item title..."
+                value={actionTitle}
+                onChange={(e) => setActionTitle(e.target.value)}
+              />
+              <input
+                className="form-control"
+                placeholder="Assignee / Owner Name"
+                value={actionOwner}
+                onChange={(e) => setActionOwner(e.target.value)}
+              />
+              <input
+                type="date"
+                className="form-control"
+                value={actionDueDate}
+                onChange={(e) => setActionDueDate(e.target.value)}
+              />
             </div>
+            <button type="submit" className="btn btn-primary btn-sm">
+              <Plus size={14} />
+              <span>Add Action Item</span>
+            </button>
           </form>
         </div>
       )}
 
-      {/* TAB CONTENT: DOCUMENTS */}
+      {/* TAB 3: DOCUMENTS */}
       {activeTab === 'documents' && (
         <div className="irms-card">
           <div className="irms-card-header">
-            <div className="irms-card-title">Case Documents &amp; Evidentiary Repository</div>
+            <div className="irms-card-title">
+              <FileText size={20} style={{ color: 'var(--accent-blue)' }} />
+              <span>Attached Documents &amp; Evidence Files</span>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 28 }}>
             {caseData.documents?.map(doc => (
-              <div key={doc.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 16 }}>
-                <div style={{ fontSize: 26, marginBottom: 6 }}>📄</div>
-                <div style={{ fontWeight: 700, fontSize: 13, wordBreak: 'break-all', color: '#0F172A' }}>{doc.document_name}</div>
-                <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                  Type: <strong>{doc.document_type}</strong> · Size: {doc.file_size_kb} KB
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                  Uploaded by {doc.uploaded_by_name} ({new Date(doc.uploaded_at).toLocaleDateString()})
+              <div key={doc.id} style={{
+                padding: '16px 18px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-light)',
+                background: '#F8FAFC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <FileText size={22} style={{ color: 'var(--accent-blue)' }} />
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--text-main)' }}>{doc.document_name}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                      Type: {doc.document_type} · By {doc.uploaded_by_name}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <form onSubmit={handleAddDocument} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
-            <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 12 }}>📎 Attach Statement or Evidentiary File</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 10, alignItems: 'flex-end' }}>
-              <div>
-                <label className="form-label">Document Filename *</label>
-                <input
-                  className="form-control"
-                  placeholder="e.g. Witness_Statement_Ramp_Officer.pdf"
-                  value={newDocName}
-                  onChange={(e) => setNewDocName(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="form-label">Document Category</label>
-                <select className="form-control" value={newDocType} onChange={(e) => setNewDocType(e.target.value)}>
-                  <option value="statement">Employee / Witness Statement</option>
-                  <option value="evidence">Evidentiary Record / Log</option>
-                  <option value="minutes">Hearing Minutes</option>
-                  <option value="report">Investigation Report</option>
-                  <option value="letter">Official Notice / Query Letter</option>
-                </select>
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ height: 40 }}>
-                Upload &amp; Log
-              </button>
+          {/* ATTACH DOCUMENT FORM */}
+          <form onSubmit={handleAddDocument} style={{ background: '#F8FAFC', padding: 20, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 14, color: 'var(--text-main)' }}>+ Attach New Document</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 14 }}>
+              <input
+                required
+                className="form-control"
+                placeholder="Document name / reference..."
+                value={newDocName}
+                onChange={(e) => setNewDocName(e.target.value)}
+              />
+              <select className="form-control" value={newDocType} onChange={(e) => setNewDocType(e.target.value)}>
+                <option value="evidence">Evidence / Witness File</option>
+                <option value="minutes">Panel Minutes / Roster</option>
+                <option value="ruling">Official Ruling Letter</option>
+              </select>
             </div>
+            <button type="submit" className="btn btn-primary btn-sm">
+              <Upload size={14} />
+              <span>Attach File</span>
+            </button>
           </form>
         </div>
       )}
 
-      {/* TAB CONTENT: COMMUNICATIONS */}
+      {/* TAB 4: COMMUNICATIONS & NOTES */}
       {activeTab === 'communications' && (
         <div className="irms-card">
           <div className="irms-card-header">
-            <div className="irms-card-title">Case Communications &amp; Internal Notes</div>
+            <div className="irms-card-title">
+              <MessageSquare size={20} style={{ color: 'var(--accent-purple)' }} />
+              <span>Communications &amp; Internal Notes Thread</span>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
-            {caseData.communications?.map(comm => (
-              <div
-                key={comm.id}
-                style={{
-                  background: comm.is_internal ? '#FEF3C7' : '#F8FAFC',
-                  border: comm.is_internal ? '1px solid #FDE68A' : '1px solid #E2E8F0',
-                  borderRadius: 8,
-                  padding: 16
-                }}
-              >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 28 }}>
+            {caseData.communications?.map(m => (
+              <div key={m.id} style={{
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-md)',
+                background: m.is_internal ? '#FFFBEB' : '#F8FAFC',
+                border: m.is_internal ? '1px solid #FDE68A' : '1px solid var(--border-light)'
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A' }}>
-                    {comm.sender_name} <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>({comm.sender_role})</span>
-                    {comm.is_internal && <span style={{ marginLeft: 8, background: '#D97706', color: '#FFFFFF', fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>INTERNAL HR NOTE</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--text-main)' }}>{m.sender_name}</span>
+                    {m.is_internal && <span className="badge badge-medium" style={{ fontSize: 10 }}>Internal Note</span>}
                   </div>
-                  <span style={{ fontSize: 11, color: '#94A3B8' }}>
-                    {new Date(comm.created_at).toLocaleString()}
-                  </span>
+                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{new Date(m.created_at).toLocaleString()}</span>
                 </div>
-                <div style={{ fontSize: 13.5, color: '#1E293B', lineHeight: 1.5 }}>
-                  {comm.message}
+                <div style={{ fontSize: 13.5, color: 'var(--text-main)', lineHeight: 1.5 }}>
+                  {m.message}
                 </div>
               </div>
             ))}
           </div>
 
-          <form onSubmit={handleAddCommunication} style={{ background: '#F8FAFC', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
+          {/* POST MESSAGE FORM */}
+          <form onSubmit={handleAddCommunication} style={{ background: '#F8FAFC', padding: 20, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 14, color: 'var(--text-main)' }}>Post Message or Internal HR Note</h4>
             <div className="form-group">
-              <label className="form-label">Post Message or Case Note</label>
               <textarea
-                className="form-control"
+                required
                 rows={3}
-                placeholder="Enter case update, investigator observation, or employee response..."
+                className="form-control"
+                placeholder="Type your update, inquiry response, or internal investigation note..."
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                required
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 600, color: '#475569' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>
                 <input
                   type="checkbox"
                   checked={isInternalNote}
                   onChange={(e) => setIsInternalNote(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: 'var(--dhl-red)' }}
                 />
-                Mark as Internal HR Note (Confidential to HR)
+                <span>Internal HR Note only (hidden from employee view)</span>
               </label>
-              <button type="submit" className="btn btn-primary">
-                Post Note 💬
+              <button type="submit" className="btn btn-primary btn-sm">
+                <Send size={14} />
+                <span>Post Note</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* TAB CONTENT: AI CASE SUMMARY */}
+      {/* TAB 5: AI COPILOT CASE ANALYSIS */}
       {activeTab === 'ai_case' && (
-        <div className="irms-card" style={{ background: '#0B1120', color: '#FFFFFF', border: '1px solid rgba(255,204,0,0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 22 }}>🤖</span>
-            <span style={{ fontWeight: 800, fontSize: 16, color: '#FFCC00' }}>AI Objective Case Intelligence Summary</span>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 16, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#93C5FD', marginBottom: 6 }}>
-              Case Timeline &amp; Procedural Evaluation
+        <div className="ai-panel">
+          <div className="ai-header">
+            <div className="ai-title">
+              <Bot size={22} style={{ color: 'var(--dhl-yellow)' }} />
+              <span>AI Case Strategy &amp; Risk Assessment</span>
             </div>
-            <p style={{ fontSize: 13, color: '#E2E8F0', lineHeight: 1.6 }}>
-              Case <strong>{caseData.case_number}</strong> has progressed through <strong>{caseData.stage_history?.length || 1}</strong> stages over the last 18 days. Two mandatory action items remain outstanding. SLA deadline is set for <strong>{caseData.sla_due_date}</strong>.
-            </p>
+            <span className="ai-badge">
+              <Sparkles size={12} style={{ marginRight: 4 }} />
+              Automated Advisor
+            </span>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#FCA5A5', marginBottom: 6 }}>
-              Recurrence Pattern Analysis
+          <div style={{ background: 'rgba(255, 204, 0, 0.08)', border: '1px solid rgba(255, 204, 0, 0.25)', borderRadius: 'var(--radius-md)', padding: 18, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--dhl-yellow)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+              Case Precedent Summary:
             </div>
-            <p style={{ fontSize: 13, color: '#E2E8F0', lineHeight: 1.6 }}>
-              Similar cases regarding <em>"{caseData.category}"</em> have been recorded 3 times in the {caseData.location} hub over the past two quarters. Procedural fairness index is nominal.
-            </p>
+            <div style={{ fontSize: 13.5, color: '#F1F5F9', lineHeight: 1.55 }}>
+              This matter correlates with 3 historic shift-scheduling grievances in the Lagos Logistics Hub. Standard procedure recommends informal mediation before formal disciplinary panel convening.
+            </div>
           </div>
 
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 14, fontStyle: 'italic' }}>
-            🛡️ AI-generated insight — requires HR/management review. Designed as an advisory decision-support system only.
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: 18, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#93C5FD', textTransform: 'uppercase', marginBottom: 6 }}>
+                Recommended Action Plan:
+              </div>
+              <div style={{ fontSize: 13, color: '#FFFFFF', lineHeight: 1.5 }}>
+                1. Verify night shift roster logs for August 10-14.<br />
+                2. Convene informal bilateral review with shop steward.<br />
+                3. Issue formal HR decision notice within 5 working days.
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: 18, borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: '#FCA5A5', textTransform: 'uppercase', marginBottom: 6 }}>
+                Compliance &amp; Risk Rating:
+              </div>
+              <div style={{ fontSize: 13, color: '#FFFFFF', lineHeight: 1.5 }}>
+                • SLA Breach Risk: <strong style={{ color: '#FCA5A5' }}>Low (4 days remaining)</strong><br />
+                • Union Escalation Risk: <strong>Moderate</strong><br />
+                • Statutory Compliance: <strong>Verified</strong>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* STAGE TRANSITION MODAL */}
       {isTransitionModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-backdrop" onClick={() => setIsTransitionModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>
-                Transition Workflow Stage: {caseData.case_number}
-              </h3>
-              <button onClick={() => setIsTransitionModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#64748B' }}>
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleStageTransition}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">Current Stage</label>
-                  <input className="form-control" value={caseData.current_stage.replace('_', ' ')} disabled />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Select Next Stage *</label>
-                  <select className="form-control" value={targetStage} onChange={(e) => setTargetStage(e.target.value)} required>
-                    {stagesList.map(s => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Transition Notes &amp; Justification *</label>
-                  <textarea
-                    className="form-control"
-                    rows={3}
-                    placeholder="Enter official justification and outcome summary for this stage transition..."
-                    value={stageNotes}
-                    onChange={(e) => setStageNotes(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="modal-title">
+                <RotateCw size={18} style={{ color: 'var(--dhl-red)' }} />
+                <span>Transition Case Stage</span>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setIsTransitionModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-danger" disabled={isSubmittingStage}>
-                  {isSubmittingStage ? 'Recording…' : 'Confirm Stage Transition'}
+              <button onClick={() => setIsTransitionModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+            </div>
+            <form onSubmit={handleStageTransition} className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Select Target Stage</label>
+                <select className="form-control" value={targetStage} onChange={(e) => setTargetStage(e.target.value)}>
+                  {stagesList.map(stg => (
+                    <option key={stg.key} value={stg.key}>{stg.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Stage Transition Rationale / Notes</label>
+                <textarea
+                  required
+                  rows={4}
+                  className="form-control"
+                  placeholder="Record mandatory rationale for advancing this case to the selected stage..."
+                  value={stageNotes}
+                  onChange={(e) => setStageNotes(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer" style={{ padding: 0, background: 'none', border: 'none', marginTop: 20 }}>
+                <button type="button" onClick={() => setIsTransitionModalOpen(false)} className="btn btn-outline">Cancel</button>
+                <button type="submit" disabled={isSubmittingStage} className="btn btn-primary">
+                  {isSubmittingStage ? 'Advancing Stage…' : 'Confirm Stage Advance'}
                 </button>
               </div>
             </form>

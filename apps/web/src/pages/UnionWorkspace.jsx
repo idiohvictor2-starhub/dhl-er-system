@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { irmsApi } from '../api/irms';
+import { Users, Calendar, CheckSquare, FileText, Plus, Clock, Building2, CheckCircle2, RotateCw } from 'lucide-react';
 
 export default function UnionWorkspace({ currentUser }) {
   const [data, setData] = useState({ meetings: [], actions: [], cba_negotiations: [] });
@@ -44,7 +45,7 @@ export default function UnionWorkspace({ currentUser }) {
       setAgenda('');
       loadData();
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error scheduling meeting: ' + err.message);
     }
   }
 
@@ -58,7 +59,7 @@ export default function UnionWorkspace({ currentUser }) {
       setActionDueDate('');
       loadData();
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert('Error adding action: ' + err.message);
     }
   }
 
@@ -68,196 +69,197 @@ export default function UnionWorkspace({ currentUser }) {
     loadData();
   }
 
-  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#64748B' }}>Loading Union &amp; JCC records…</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <RotateCw size={32} className="animate-spin" style={{ color: 'var(--dhl-yellow)', margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)' }}>Loading Union &amp; JCC Workspace…</div>
+        <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to Collective Bargaining &amp; Joint Consultative Committee Registry</div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className="page-header">
-        <div className="page-title-group">
-          <h1>Union &amp; Joint Consultative Committee (JCC) Hub</h1>
-          <div className="page-subtitle">
-            Bilateral management of union consultations, JCC meetings, action points, and Collective Bargaining Agreements.
-          </div>
+      {/* HERO TITLE SECTION */}
+      <div className="page-hero-header">
+        <div>
+          <h1 className="hero-heading">Union &amp; JCC Bilateral Workspace</h1>
+          <p className="hero-tagline">
+            Joint Consultative Committee governance, bilateral meetings, and Collective Bargaining Agreement (CBA) tracking.
+          </p>
         </div>
 
-        <button onClick={() => setIsScheduleModalOpen(true)} className="btn btn-danger">
-          ➕ Convene JCC Meeting
+        <button onClick={() => setIsScheduleModalOpen(true)} className="btn btn-primary">
+          <Plus size={16} strokeWidth={3} />
+          <span>Schedule Bilateral Session</span>
         </button>
       </div>
 
-      {/* CBA NEGOTIATION PIPELINE CARD */}
-      <div className="irms-card" style={{ borderLeft: '4px solid #7C3AED' }}>
+      {/* MEETINGS GRID */}
+      <div className="irms-card">
         <div className="irms-card-header">
           <div className="irms-card-title">
-            <span>📜</span> Active National Collective Bargaining Agreement (CBA) Review
+            <Calendar size={20} style={{ color: 'var(--accent-blue)' }} />
+            <span>Scheduled &amp; Recent Bilateral Meetings</span>
           </div>
-          <span className="badge badge-in_progress">Negotiation Stage 2</span>
         </div>
 
-        {data.cba_negotiations?.map(cba => (
-          <div key={cba.id}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', marginTop: 0 }}>{cba.title}</h3>
-            <p style={{ color: '#475569', fontSize: 13.5, marginBottom: 12 }}>{cba.proposal_summary}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, background: '#F8FAFC', padding: 12, borderRadius: 8 }}>
-              <div>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>UNION LEAD REP</span>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{cba.union_rep_lead}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 18 }}>
+          {data.meetings?.map(m => (
+            <div key={m.id} style={{
+              padding: '20px',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-light)',
+              background: '#FFFFFF',
+              boxShadow: 'var(--shadow-card)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <span className="badge badge-union" style={{ fontSize: 10 }}>
+                  {m.meeting_type?.replace('_', ' ')}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
+                  📅 {m.meeting_date}
+                </span>
               </div>
-              <div>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>MANAGEMENT LEAD</span>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{cba.management_lead_name}</div>
-              </div>
-              <div>
-                <span style={{ fontSize: 11, color: '#64748B', fontWeight: 700 }}>TARGET EFFECTIVE DATE</span>
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#2563EB' }}>📅 {cba.effective_date}</div>
-              </div>
-            </div>
-            <div style={{ fontSize: 12, color: '#0F172A', marginTop: 10, background: '#EFF6FF', padding: 8, borderRadius: 6 }}>
-              💡 Status: <strong>{cba.notes}</strong>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24 }}>
-        {/* JCC MEETINGS SESSIONS */}
-        <div className="irms-card">
-          <div className="irms-card-header">
-            <div className="irms-card-title">
-              <span>📅</span> JCC &amp; Consultative Sessions
-            </div>
-          </div>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>
+                {m.title}
+              </h4>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {data.meetings?.map(m => (
-              <div key={m.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>{m.title}</span>
-                  <span className={`badge badge-${m.status}`}>{m.status}</span>
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8 }}>
-                  📅 {new Date(m.meeting_date).toLocaleDateString()} · 📍 {m.location}
-                </div>
-                <div style={{ fontSize: 12.5, color: '#334155', background: '#FFFFFF', padding: 10, borderRadius: 6, border: '1px solid #E2E8F0', marginBottom: 8 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Building2 size={14} />
+                <span>{m.location}</span>
+              </div>
+
+              {m.agenda && (
+                <div style={{ fontSize: 13, color: 'var(--text-main)', background: '#F8FAFC', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
                   <strong>Agenda:</strong> {m.agenda}
                 </div>
-                {m.minutes && (
-                  <div style={{ fontSize: 12, color: '#166534', background: '#F0FDF4', padding: 8, borderRadius: 6 }}>
-                    ✓ <strong>Minutes Recorded:</strong> {m.minutes}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* UNION ACTION POINTS TRACKER */}
-        <div className="irms-card">
-          <div className="irms-card-header">
-            <div className="irms-card-title">
-              <span>⚡</span> Bilateral Action Points Tracker
+              )}
             </div>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            {data.actions?.map(act => (
-              <div
-                key={act.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: 10,
-                  borderRadius: 6,
-                  background: act.status === 'completed' ? '#F0FDF4' : '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  marginBottom: 8
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={act.status === 'completed'}
-                    onChange={() => handleToggleAction(act.id, act.status)}
-                    style={{ width: 16, height: 16, cursor: 'pointer' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, textDecoration: act.status === 'completed' ? 'line-through' : 'none' }}>
-                      {act.action_title}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>
-                      Owner: {act.owner_name} · Due: 📅 {act.due_date}
-                    </div>
-                  </div>
-                </div>
-                <span className={`badge badge-${act.status}`}>{act.status}</span>
-              </div>
-            ))}
-          </div>
-
-          <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0' }}>
-            <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8 }}>+ Log New Action Point</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
-              <input
-                className="form-control"
-                placeholder="Action summary..."
-                value={actionTitle}
-                onChange={(e) => setActionTitle(e.target.value)}
-                required
-              />
-              <input
-                className="form-control"
-                placeholder="Owner"
-                value={actionOwner}
-                onChange={(e) => setActionOwner(e.target.value)}
-              />
-              <button type="submit" className="btn btn-primary" style={{ height: 38 }}>
-                Add
-              </button>
-            </div>
-          </form>
+          ))}
         </div>
       </div>
 
-      {/* SCHEDULE MEETING MODAL */}
+      {/* ACTION TRACKER SECTION */}
+      <div className="irms-card">
+        <div className="irms-card-header">
+          <div className="irms-card-title">
+            <CheckSquare size={20} style={{ color: 'var(--accent-green)' }} />
+            <span>Joint Action Item Commitments</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          {data.actions?.map(a => {
+            const isCompleted = a.status === 'completed';
+            return (
+              <div key={a.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 18px',
+                borderRadius: 'var(--radius-md)',
+                background: isCompleted ? '#ECFDF5' : '#F8FAFC',
+                border: isCompleted ? '1px solid #A7F3D0' : '1px solid var(--border-light)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <input
+                    type="checkbox"
+                    checked={isCompleted}
+                    onChange={() => handleToggleAction(a.id, a.status)}
+                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--dhl-red)' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 14, textDecoration: isCompleted ? 'line-through' : 'none', color: isCompleted ? '#065F46' : 'var(--text-main)' }}>
+                      {a.action_title}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                      Assigned to: <strong>{a.owner_name}</strong> {a.due_date && `· Due: ${a.due_date}`}
+                    </div>
+                  </div>
+                </div>
+                <span className={`badge ${isCompleted ? 'badge-closed' : 'badge-in_progress'}`}>
+                  {a.status}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ADD ACTION FORM */}
+        <form onSubmit={handleAddAction} style={{ background: '#F8FAFC', padding: 20, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+          <h4 style={{ fontSize: 14, fontWeight: 800, marginBottom: 14, color: 'var(--text-main)' }}>+ Add Joint Committee Action Item</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 14 }}>
+            <input
+              required
+              className="form-control"
+              placeholder="Action title..."
+              value={actionTitle}
+              onChange={(e) => setActionTitle(e.target.value)}
+            />
+            <input
+              className="form-control"
+              placeholder="Assignee Lead"
+              value={actionOwner}
+              onChange={(e) => setActionOwner(e.target.value)}
+            />
+            <input
+              type="date"
+              className="form-control"
+              value={actionDueDate}
+              onChange={(e) => setActionDueDate(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-sm">
+            <Plus size={14} />
+            <span>Add Action Item</span>
+          </button>
+        </form>
+      </div>
+
+      {/* SCHEDULE MODAL */}
       {isScheduleModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-backdrop" onClick={() => setIsScheduleModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Convene JCC / Consultative Session</h3>
-              <button onClick={() => setIsScheduleModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
+              <div className="modal-title">
+                <Calendar size={18} style={{ color: 'var(--dhl-red)' }} />
+                <span>Schedule Bilateral Session</span>
+              </div>
+              <button onClick={() => setIsScheduleModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
             </div>
-            <form onSubmit={handleScheduleMeeting}>
-              <div className="modal-body">
+            <form onSubmit={handleScheduleMeeting} className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Session Title *</label>
+                <input required className="form-control" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Q3 Bilateral Review on Transport Allowances" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div className="form-group">
-                  <label className="form-label">Meeting Title *</label>
-                  <input className="form-control" placeholder="e.g. Q4 National JCC Session" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                  <label className="form-label">Meeting Date</label>
+                  <input type="date" required className="form-control" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Meeting Type</label>
+                  <label className="form-label">Session Category</label>
                   <select className="form-control" value={meetingType} onChange={(e) => setMeetingType(e.target.value)}>
-                    <option value="quarterly_jcc">Quarterly Joint Consultative Committee</option>
-                    <option value="safety_committee">Health, Safety &amp; Environment Committee</option>
-                    <option value="cba_negotiation">CBA &amp; Welfare Negotiation</option>
-                    <option value="emergency_consultation">Emergency Grievance Consultation</option>
+                    <option value="quarterly_jcc">Quarterly JCC Review</option>
+                    <option value="cba_negotiation">CBA Negotiation</option>
+                    <option value="emergency_dialogue">Emergency Dialogue</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Date &amp; Time *</label>
-                  <input type="datetime-local" className="form-control" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Location / Boardroom</label>
-                  <input className="form-control" value={location} onChange={(e) => setLocation(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Agenda Items</label>
-                  <textarea className="form-control" rows={3} placeholder="1. Item one; 2. Item two..." value={agenda} onChange={(e) => setAgenda(e.target.value)} />
-                </div>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-outline" onClick={() => setIsScheduleModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-danger">Schedule Session 📅</button>
+              <div className="form-group">
+                <label className="form-label">Venue / Room</label>
+                <input className="form-control" value={location} onChange={(e) => setLocation(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Proposed Agenda Summary</label>
+                <textarea rows={3} className="form-control" value={agenda} onChange={(e) => setAgenda(e.target.value)} placeholder="List core agenda items..." />
+              </div>
+              <div className="modal-footer" style={{ padding: 0, background: 'none', border: 'none', marginTop: 20 }}>
+                <button type="button" onClick={() => setIsScheduleModalOpen(false)} className="btn btn-outline">Cancel</button>
+                <button type="submit" className="btn btn-primary">Schedule Session</button>
               </div>
             </form>
           </div>

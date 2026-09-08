@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { irmsApi } from '../api/irms';
+import { GraduationCap, Award, CheckCircle2, Clock, BookOpen, RotateCw, Building2 } from 'lucide-react';
 
 export default function TrainingTracker({ currentUser }) {
   const [data, setData] = useState({ programs: [], completions: [] });
   const [loading, setLoading] = useState(true);
+  const [recordingId, setRecordingId] = useState(null);
 
   useEffect(() => {
     irmsApi.getTrainingData()
@@ -13,65 +15,121 @@ export default function TrainingTracker({ currentUser }) {
   }, []);
 
   async function handleCompleteProgram(programId) {
-    await irmsApi.recordTrainingCompletion({
-      program_id: programId,
-      user_name: currentUser?.name || 'Staff Member',
-      department: currentUser?.department || 'Operations',
-      location: currentUser?.location || 'Lagos',
-      score: 96
-    });
-    const updated = await irmsApi.getTrainingData();
-    setData(updated);
-    alert('Training certificate recorded successfully!');
+    setRecordingId(programId);
+    try {
+      await irmsApi.recordTrainingCompletion({
+        program_id: programId,
+        user_name: currentUser?.name || 'Staff Member',
+        department: currentUser?.department || 'Operations',
+        location: currentUser?.location || 'Lagos',
+        score: 96
+      });
+      const updated = await irmsApi.getTrainingData();
+      setData(updated);
+      alert('Training certificate recorded and accredited to employee record successfully!');
+    } catch (err) {
+      alert('Error recording completion: ' + err.message);
+    } finally {
+      setRecordingId(null);
+    }
   }
 
-  if (loading) return <div style={{ padding: 32, textAlign: 'center', color: '#64748B' }}>Loading Training &amp; Capacity Builder records…</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <RotateCw size={32} className="animate-spin" style={{ color: 'var(--dhl-yellow)', margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-main)' }}>Loading Capability Academy…</div>
+        <div style={{ fontSize: 13, marginTop: 4 }}>Connecting to DHL Industrial Relations Academy registry</div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className="page-header">
-        <div className="page-title-group">
-          <h1>Industrial Relations Training &amp; Compliance Hub</h1>
-          <div className="page-subtitle">
-            Capacity building across grievance handling, disciplinary procedures, investigation standards, and labor relations.
-          </div>
+      {/* HERO TITLE SECTION */}
+      <div className="page-hero-header">
+        <div>
+          <h1 className="hero-heading">Capability Academy &amp; Certification</h1>
+          <p className="hero-tagline">
+            Mandatory capability programs across dispute resolution, statutory disciplinary standards, union negotiations, and safety compliance.
+          </p>
         </div>
       </div>
 
-      {/* TRAINING PROGRAMS GRID */}
-      <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 14 }}>Core Industrial Relations Modules</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 28 }}>
-        {data.programs?.map(p => (
-          <div key={p.id} className="irms-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span className="badge badge-grievance">{p.category}</span>
-                <span style={{ fontSize: 11, color: '#64748B' }}>Mandatory</span>
-              </div>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', marginTop: 0, marginBottom: 6 }}>
-                {p.name}
-              </h3>
-              <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5 }}>
-                {p.description}
-              </p>
-            </div>
-            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, color: '#94A3B8' }}>Roles: {p.mandatory_for_roles}</span>
-              <button onClick={() => handleCompleteProgram(p.id)} className="btn btn-sm btn-primary">
-                🎓 Complete Module
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* CERTIFICATIONS & COMPLETIONS REGISTRY */}
+      {/* TRAINING MODULES GRID */}
       <div className="irms-card">
         <div className="irms-card-header">
           <div className="irms-card-title">
-            <span>📜</span> Recent Certifications &amp; Completed Records
+            <GraduationCap size={20} style={{ color: 'var(--dhl-yellow)' }} />
+            <span>Accredited IR Training Curriculum</span>
           </div>
-          <span style={{ fontSize: 12, color: '#64748B' }}>Total Completed: {data.completions?.length || 0}</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+          {data.programs?.map(p => {
+            const hasCompleted = data.completions?.some(c => c.program_id === p.id);
+            return (
+              <div key={p.id} style={{
+                padding: '22px',
+                borderRadius: 'var(--radius-lg)',
+                border: hasCompleted ? '1.5px solid #A7F3D0' : '1px solid var(--border-light)',
+                background: hasCompleted ? '#ECFDF5' : '#FFFFFF',
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <span className="badge badge-query" style={{ fontSize: 10 }}>
+                      {p.target_role || 'All Managers'}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={13} />
+                      <span>{p.duration_hours || 4} Hours</span>
+                    </span>
+                  </div>
+
+                  <h4 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 }}>
+                    {p.title}
+                  </h4>
+
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 18 }}>
+                    {p.description}
+                  </p>
+                </div>
+
+                <div>
+                  {hasCompleted ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#047857', fontWeight: 800, fontSize: 13 }}>
+                      <CheckCircle2 size={18} />
+                      <span>Certified &amp; Accredited</span>
+                    </div>
+                  ) : (
+                    <button
+                      disabled={recordingId === p.id}
+                      onClick={() => handleCompleteProgram(p.id)}
+                      className="btn btn-primary"
+                      style={{ width: '100%' }}
+                    >
+                      <Award size={16} />
+                      <span>{recordingId === p.id ? 'Recording Completion…' : 'Take Module &amp; Certify'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* RECENT ACADEMY COMPLETIONS LOG */}
+      <div className="irms-card">
+        <div className="irms-card-header">
+          <div className="irms-card-title">
+            <Award size={20} style={{ color: 'var(--accent-green)' }} />
+            <span>Certified Manager Compliance Log</span>
+          </div>
         </div>
 
         <div className="table-responsive">
@@ -79,24 +137,22 @@ export default function TrainingTracker({ currentUser }) {
             <thead>
               <tr>
                 <th>Participant</th>
+                <th>Station Hub</th>
                 <th>Department</th>
-                <th>Location</th>
+                <th>Completed Module</th>
                 <th>Score</th>
-                <th>Completion Date</th>
-                <th>Expiry / Recertification</th>
-                <th>Status</th>
+                <th>Accreditation Date</th>
               </tr>
             </thead>
             <tbody>
-              {data.completions?.map(c => (
-                <tr key={c.id}>
-                  <td><strong>{c.user_name}</strong></td>
+              {data.completions?.map((c, i) => (
+                <tr key={i}>
+                  <td><strong style={{ color: 'var(--text-main)', fontSize: 13.5 }}>{c.user_name}</strong></td>
+                  <td>{c.location}</td>
                   <td>{c.department}</td>
-                  <td>{c.location.split('(')[0]}</td>
-                  <td><span style={{ fontWeight: 800, color: '#16A34A' }}>{c.score}%</span></td>
-                  <td>📅 {c.completion_date}</td>
-                  <td>📅 {c.expiry_date}</td>
-                  <td><span className="badge badge-closed">✓ Certified</span></td>
+                  <td>{c.program_title || 'IR Fundamentals'}</td>
+                  <td><span className="badge badge-closed">{c.score}% Pass</span></td>
+                  <td>{new Date(c.completed_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

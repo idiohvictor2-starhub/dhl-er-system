@@ -7,6 +7,7 @@
     "apps/web"
   ],
   "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
     "migrate": "npm run migrate --workspace=apps/api",
@@ -15,5 +16,8 @@
     "test:api": "npm run test --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",
     "build": "npm run build --workspace=apps/web"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }
