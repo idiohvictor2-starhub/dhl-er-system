@@ -14,8 +14,8 @@
     "migrate:down": "npm run migrate:down --workspace=apps/api",
     "seed": "npm run seed --workspace=apps/api",
     "test:api": "npm run test --workspace=apps/api",
-    "build:web": "npm run build --workspace=apps/web",
-    "build": "npm run build --workspace=apps/web"
+    "build:web": "vite build apps/web || vite build",
+    "build": "vite build apps/web || vite build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
